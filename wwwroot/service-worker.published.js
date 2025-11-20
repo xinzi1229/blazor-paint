@@ -53,3 +53,19 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
+workbox.routing.registerRoute(
+  // 匹配条件：请求的 'mode' 为 'navigate'，这通常是浏览器请求 HTML 页面
+  ({ request }) => request.mode === 'navigate',
+  
+  // 使用 NetworkFirst 策略
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'html-cache',
+    
+    // 插件：确保只缓存成功的响应
+    plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200], // 只缓存状态码为 0 (离线) 或 200 的响应
+      }),
+    ],
+  })
+);
