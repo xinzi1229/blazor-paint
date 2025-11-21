@@ -1,11 +1,9 @@
-﻿@page "/userPage"
+﻿@page "/userpage"
 @inject HttpClient Http
 
-<PageTitle>Weather</PageTitle>
+<PageTitle>用户列表</PageTitle>
 
-<h1>Weather</h1>
-
-<p>用户列表</p>
+<h1>用户列表</h1>
 
 @if (users == null)
 {
@@ -13,7 +11,7 @@
 }
 else
 {
-    <table class="table">
+    <table class="table table-bordered table-hover >
         <thead>
             <tr>
                 <th>ID</th>
@@ -36,11 +34,11 @@ else
 
 @code {
     private User[]? users;
-    string rootUrl = "https://api.aicoat.top/";
+    string rootUrl = "https://api.aicoat.top";
 
     protected override async Task OnInitializedAsync()
     {
-        users = await Http.GetFromJsonAsync<User[]>(rootUrl + "users");
+        users = await Http.GetFromJsonAsync<User[]>(rootUrl + "/users");
     }
 
     public class User
