@@ -1,0 +1,106 @@
+﻿@page "/paintpage"
+@inject HttpClient Http
+@using System.Text.Json
+<PageTitle>油漆参数表</PageTitle>
+
+<h1>油漆参数表</h1>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (products.Length == 0)
+{
+    <p>没有记录。</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                @foreach (var col in columns)
+                {
+                    <th>@col</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < products.Length; i++)
+            {
+                <tr>
+                    <td>@(i + 1)</td>
+                    @foreach (var col in columns)
+                    {
+                        <td>@GetPropertyString(products[i], col)</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private JsonElement[]? products;
+    private string[] columns = Array.Empty<string>();
+    private string? errorMessage;
+    string rootUrl = "https://zpapi.aicoat.top/api/";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = await Http.GetFromJsonAsync<JsonElement[]>(rootUrl + "paint-products");
+
+            if (products != null && products.Length > 0 && products[0].ValueKind == JsonValueKind.Object)
+            {
+                var props = new List<string>();
+                foreach (var prop in products[0].EnumerateObject())
+                {
+                    props.Add(prop.Name);
+                }
+                columns = props.ToArray();
+            }
+            else
+            {
+                columns = Array.Empty<string>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.ToString());
+            errorMessage = "请求数据时出错：" + ex.Message;
+            products = Array.Empty<JsonElement>();
+            columns = Array.Empty<string>();
+        }
+    }
+
+    private string GetPropertyString(JsonElement el, string prop)
+    {
+        if (el.ValueKind != JsonValueKind.Object)
+            return el.ToString() ?? string.Empty;
+
+        if (!el.TryGetProperty(prop, out var p))
+            return string.Empty;
+
+        switch (p.ValueKind)
+        {
+            case JsonValueKind.String:
+                return p.GetString() ?? string.Empty;
+            case JsonValueKind.Number:
+                return p.GetRawText();
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return p.GetRawText();
+            case JsonValueKind.Null:
+                return string.Empty;
+            default:
+                return p.GetRawText();
+        }
+    }
+}
